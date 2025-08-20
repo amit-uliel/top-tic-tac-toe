@@ -1,4 +1,4 @@
-const gameboard = (function() {
+function createGameBoard() {
     const rows = 3;
     const columns = 3;
     const board = [];
@@ -61,9 +61,10 @@ const gameboard = (function() {
     };
 
     return { render, markCell, getMarkedCells, getBoard, getRow, getColumn, getDiagonals };
-})();
+}
 
 function createGameController (playerOneName = "Player One", playerTwoName = "Player Two") {
+    const gameboard = createGameBoard();
     const players = [
         {
             name: playerOneName,
@@ -89,11 +90,6 @@ function createGameController (playerOneName = "Player One", playerTwoName = "Pl
 
     const switchPlayerTurn = () => {
         activePlayer = getActivePlayer() === players[0] ? players[1] : players[0];
-    }
-
-    const printNewTurn = () => {
-        gameboard.render();
-        console.log(`${getActivePlayer().name}'s turn to mark.`);
     }
 
     const allEqual = (arr) => {
@@ -136,30 +132,32 @@ function createGameController (playerOneName = "Player One", playerTwoName = "Pl
         return false;
     }
 
-    const playTurn = (rowIndex, columnIndex) => {
-        console.log(`${getActivePlayer().name} is marking at (${rowIndex}, ${columnIndex}).`);
-
-        // Attempt to mark the cell, if it's already taken - exit early
-        if(!gameboard.markCell(rowIndex, columnIndex, getActivePlayer().marker)) {
-            return;
-        }
-        
-        // End the turn early if the game has finished (win or tie)
+    const getGameStats = (rowIndex, columnIndex) => {
         if (checkWin(rowIndex, columnIndex)) {
-            console.log(`${getActivePlayer().name} is the Winner !`);
-            gameboard.render();
-            return;
+            return { ended: true, result: "win" };
         } else if (gameboard.getMarkedCells() === 9) {
-            console.log(`A tie !`);
-            gameboard.render();
-            return;
-        }
-        
-        switchPlayerTurn();
-        printNewTurn();
+            return { ended: true, result: "tie" };
+        } 
+
+        return { ended: false };
     }
 
-    return { getActivePlayer, playTurn };
+    const playTurn = (rowIndex, columnIndex) => {
+        // Attempt to mark the cell, if it's already taken - exit early
+        if (!gameboard.markCell(rowIndex, columnIndex, getActivePlayer().marker)) {
+            return { ended: false, result: "invalid" };
+        }
+        
+        const gameStats = getGameStats(rowIndex, columnIndex);
+        console.log(gameStats);
+
+        if (gameStats.ended) return gameStats;
+        
+        switchPlayerTurn();
+        return gameStats;
+    }
+
+    return { getActivePlayer, playTurn, getBoard: gameboard.getBoard };
 }
 
 function createCell() {
@@ -174,4 +172,53 @@ function createCell() {
     return { setMarker, getMarker };
 }
 
-const gameController = createGameController("Amit", "Tahel");
+function createScreenController() {
+    const gameController = createGameController("Amit", "Tahel");
+    const turnDisplayerDiv = document.querySelector(".turn");
+    const boardDiv = document.querySelector(".board");
+    let gameEnded = false;
+    
+    const updateScreen = () => {
+        boardDiv.textContent = "";
+        const board = gameController.getBoard();
+        turnDisplayerDiv.textContent = `${gameController.getActivePlayer().name}'s turn to play`;
+
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                const button = document.createElement("button");
+                button.dataset.row = i;
+                button.dataset.column = j;
+                button.textContent = board[i][j].getMarker();
+
+                boardDiv.appendChild(button);
+            }
+        }
+    }
+
+    const showMessage = (message) => {
+        turnDisplayerDiv.textContent = message;
+    }
+
+    const clickHandlerBoard = (e) => {
+        if (gameEnded) return;
+
+        const cell = e.target;
+        const row = Number(cell.dataset.row);
+        const column = Number(cell.dataset.column);
+        
+        if (row === null || column === null) return;
+        
+        const gameStats = gameController.playTurn(row, column);
+        
+        updateScreen();
+        if (gameStats.ended) {
+            showMessage(gameStats.result === 'win' ? `${gameController.getActivePlayer().name} won` : "A tie");
+            gameEnded = true;
+        }
+    }
+    
+    boardDiv.addEventListener("click", clickHandlerBoard);
+    updateScreen();
+};
+
+createScreenController();

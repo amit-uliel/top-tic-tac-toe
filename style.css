@@ -1,0 +1,16 @@
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    width: 300px;
+}
+
+.board > * {
+    background-color: transparent;
+    font-size: 1.5rem;
+    height: 100px;
+    width: 100px;
+}
+
+.board > *:hover {
+    background-color: aliceblue;
+}
