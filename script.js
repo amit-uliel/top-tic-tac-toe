@@ -2,6 +2,7 @@ const gameboard = (function() {
     const rows = 3;
     const columns = 3;
     const board = [];
+    let markedCells = 0;
 
     // initialize board
     for (let i = 0; i < rows; i++) {
@@ -12,6 +13,8 @@ const gameboard = (function() {
     }
 
     const getBoard = () => board;
+
+    const getMarkedCells = () => markedCells;
     
     const getRow = row => board[row].map(cell => cell.getMarker());
 
@@ -53,10 +56,11 @@ const gameboard = (function() {
         }
 
         board[row][column].setMarker(marker);
+        markedCells++;
         return true;
     };
 
-    return { render, markCell, getBoard, getRow, getColumn, getDiagonals };
+    return { render, markCell, getMarkedCells, getBoard, getRow, getColumn, getDiagonals };
 })();
 
 function createGameController (playerOneName = "Player One", playerTwoName = "Player Two") {
@@ -133,15 +137,23 @@ function createGameController (playerOneName = "Player One", playerTwoName = "Pl
     }
 
     const playTurn = (rowIndex, columnIndex) => {
-        console.log(`${getActivePlayer().name} mark at (${rowIndex}, ${columnIndex}).`);
+        console.log(`${getActivePlayer().name} is marking at (${rowIndex}, ${columnIndex}).`);
 
-        gameboard.markCell(rowIndex, columnIndex, getActivePlayer().marker);
+        // Attempt to mark the cell, if it's already taken - exit early
+        if(!gameboard.markCell(rowIndex, columnIndex, getActivePlayer().marker)) {
+            return;
+        }
         
+        // End the turn early if the game has finished (win or tie)
         if (checkWin(rowIndex, columnIndex)) {
             console.log(`${getActivePlayer().name} is the Winner !`);
             gameboard.render();
             return;
-        } 
+        } else if (gameboard.getMarkedCells() === 9) {
+            console.log(`A tie !`);
+            gameboard.render();
+            return;
+        }
         
         switchPlayerTurn();
         printNewTurn();
@@ -163,9 +175,3 @@ function createCell() {
 }
 
 const gameController = createGameController("Amit", "Tahel");
-// Amit marks top row
-gameController.playTurn(0,0); // X
-gameController.playTurn(1,0); // O
-gameController.playTurn(0,1); // X
-gameController.playTurn(1,1); // O
-gameController.playTurn(0,2); // X → Amit wins (top row)
