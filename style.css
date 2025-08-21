@@ -14,3 +14,7 @@
 .board > *:hover {
     background-color: aliceblue;
 }
+
+.restartButton {
+    display: none;
+}

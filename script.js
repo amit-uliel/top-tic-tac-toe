@@ -63,7 +63,7 @@ function createGameBoard() {
     return { render, markCell, getMarkedCells, getBoard, getRow, getColumn, getDiagonals };
 }
 
-function createGameController (playerOneName = "Player One", playerTwoName = "Player Two") {
+function createGameController (playerOneName, playerTwoName) {
     const gameboard = createGameBoard();
     const players = [
         {
@@ -173,10 +173,24 @@ function createCell() {
 }
 
 function createScreenController() {
-    const gameController = createGameController("Amit", "Tahel");
+    let gameController;
+    let gameEnded;
     const turnDisplayerDiv = document.querySelector(".turn");
     const boardDiv = document.querySelector(".board");
-    let gameEnded = false;
+    const restartButton = document.querySelector(".restartButton");
+    const playerOneInput = document.querySelector(".playerOne");
+    const playerTwoInput = document.querySelector(".playerTwo");
+    const startGameButton = document.querySelector(".startGameButton");
+
+    startGameButton.addEventListener("click", () => {
+        startGame();
+    });
+
+    restartButton.addEventListener("click", function () {
+        playerOneInput.style.display = "inline";
+        playerTwoInput.style.display = "inline";
+        startGameButton.style.display = "inline";
+    });
     
     const updateScreen = () => {
         boardDiv.textContent = "";
@@ -193,6 +207,18 @@ function createScreenController() {
                 boardDiv.appendChild(button);
             }
         }
+    }
+
+    const startGame = () => {
+        const playerOneName = playerOneInput.value || "Player One";
+        const playerTwoName = playerTwoInput.value || "Player Two";
+        gameController = createGameController(playerOneName, playerTwoName);
+        gameEnded = false;
+        updateScreen();
+
+        playerOneInput.style.display = "none";
+        playerTwoInput.style.display = "none";
+        startGameButton.style.display = "none";
     }
 
     const showMessage = (message) => {
@@ -214,11 +240,11 @@ function createScreenController() {
         if (gameStats.ended) {
             showMessage(gameStats.result === 'win' ? `${gameController.getActivePlayer().name} won` : "A tie");
             gameEnded = true;
+            restartButton.style.display = "block";
         }
     }
     
     boardDiv.addEventListener("click", clickHandlerBoard);
-    updateScreen();
-};
+}
 
 createScreenController();
